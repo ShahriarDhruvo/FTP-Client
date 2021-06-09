@@ -105,7 +105,7 @@
     <string>Application Status</string>
    </property>
   </widget>
-  <widget class="QScrollArea" name="serverFilesArea">
+  <widget class="QScrollArea" name="scrollArea">
    <property name="geometry">
     <rect>
      <x>20</x>
