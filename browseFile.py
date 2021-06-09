@@ -1,4 +1,6 @@
+import os
 import sys
+import time
 from PyQt5.QtCore import *
 from PyQt5 import QtWidgets
 from PyQt5.uic import loadUi
@@ -64,7 +66,7 @@ class MainWindow(QDialog):
         fileNameLabel.setAlignment(Qt.AlignCenter)
         fileNameLabel.setStyleSheet("QLabel"
                             "{"
-                            "border: 2px hidden grey;"
+                            "border: 1px hidden grey;"
                             "border-radius: 2px;"
                             "background-color: lightgrey;"
                             "}")
@@ -84,30 +86,59 @@ class MainWindow(QDialog):
         self.fileListLayout.addWidget(downloadButton, index, 4)
         self.fileListLayout.addWidget(deleteButton, index, 5)
 
+    # Show Server Files
     def listFiles(self):
-        # Show Server Files
         self.client.send("LIST".encode(FORMAT))
         data = self.client.recv(SIZE).decode(FORMAT)
         data = data.split("@")
 
-        data = data[1].split("\n")
+        if(data[0] != "NULL"):
+            data = data[1].split("\n")
 
-        # print(data, "prev Lol")
-
-        for i in range(len(data)):
-            self.filesLayout(i, data[i])
-        
+            for i in range(len(data)):
+                self.filesLayout(i, data[i])
+        else:
+            self.statusBox.setText(f"[{data[0]}]: " + data[1])
+    ###############################################################    
     def uploadFile(self):
         path = self.fileLocation.text()
 
-        with open(f"{path}", "r") as f:
+        if not path:
+            self.statusBox.setText("[NULL]: Select a file directory first")
+        else:
+            filename = path.split("/")[-1]
+            filesize = str(os.path.getsize(path))
+
+            send_data = f"UPLOAD@{filename}@{filesize}"
+            self.client.send(send_data.encode(FORMAT))
+            
+            with open(f"{path}", "rb") as f:
+                start_time = time.time()
+
+                bytesToSend = f.read(SIZE)
+                self.client.send(bytesToSend)
+                while len(bytesToSend) !=0:
+                    bytesToSend = f.read(SIZE)
+                    self.client.send(bytesToSend)
+                
+                end_time = time.time()
+
+            self.statusBox.setText("File transfer Complete. Transfer time: " + "{:.2f}".format(end_time - start_time) + "s")
+            self.fileLocation.setText(None)
+            # self.listFiles()
+    
+    def downloadFile(self, fileName):
+        downloadLocation = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
+
+        path = f"server_data/{fileName}"
+
+        with open(f"{path}", "rb") as f:
             text = f.read()
 
         filename = path.split("/")[-1]
-        send_data = f"UPLOAD@{filename}@{text}"
+        send_data = f"DOWNLOAD@{filename}@{text}@{downloadLocation}"
         self.client.send(send_data.encode(FORMAT))
-        
-        self.update()
+    ###############################################################
     
     def update(self):
         data = self.client.recv(SIZE).decode(FORMAT).split("@")
@@ -116,19 +147,8 @@ class MainWindow(QDialog):
 
     def deleteFile(self, fileName):
         self.client.send(f"DELETE@{fileName}".encode(FORMAT))
-        self.update()
 
-    def downloadFile(self, fileName):
-        downloadLocation = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
-
-        path = f"server_data/{fileName}"
-
-        with open(f"{path}", "r") as f:
-            text = f.read()
-
-        filename = path.split("/")[-1]
-        send_data = f"DOWNLOAD@{filename}@{text}@{downloadLocation}"
-        self.client.send(send_data.encode(FORMAT))
+        # self.update()
         
 app = QApplication(sys.argv)
 mainWindow = MainWindow()
