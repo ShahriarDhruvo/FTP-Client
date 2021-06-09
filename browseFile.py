@@ -61,15 +61,7 @@ class MainWindow(QDialog):
 
     def filesLayout(self, index, fileName):
         fileNameLabel = QLabel(" " + fileName, self)
-            
-        # x_position = 30
-        # y_position = 180
-        # label_width = 581
-        # label_height = 33
-
-        # fileNameLabel.setGeometry(x_position, y_position+(i*50), label_width, label_height)
         fileNameLabel.setAlignment(Qt.AlignCenter)
-        
         fileNameLabel.setStyleSheet("QLabel"
                             "{"
                             "border: 2px hidden grey;"
@@ -78,15 +70,12 @@ class MainWindow(QDialog):
                             "}")
         
         # Action Buttons                                
-        # button_width = 95
-        # button_height = 34
-
         downloadButton = QPushButton('Download', self)
-        # downloadButton.setGeometry(x_position + 600, y_position+(i*50), button_width, button_height)
         downloadButton.setStyleSheet("background-color: #8081e8")
 
+        downloadButton.clicked.connect(lambda: self.downloadFile(fileName))
+
         deleteButton = QPushButton('Delete', self)
-        # deleteButton.setGeometry(x_position + 700, y_position+(i*50), button_width, button_height)
         deleteButton.setStyleSheet("background-color: #ed727d")
 
         deleteButton.clicked.connect(lambda: self.deleteFile(fileName))
@@ -103,9 +92,11 @@ class MainWindow(QDialog):
 
         data = data[1].split("\n")
 
+        # print(data, "prev Lol")
+
         for i in range(len(data)):
             self.filesLayout(i, data[i])
-    
+        
     def uploadFile(self):
         path = self.fileLocation.text()
 
@@ -125,9 +116,20 @@ class MainWindow(QDialog):
 
     def deleteFile(self, fileName):
         self.client.send(f"DELETE@{fileName}".encode(FORMAT))
-
         self.update()
 
+    def downloadFile(self, fileName):
+        downloadLocation = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
+
+        path = f"server_data/{fileName}"
+
+        with open(f"{path}", "r") as f:
+            text = f.read()
+
+        filename = path.split("/")[-1]
+        send_data = f"DOWNLOAD@{filename}@{text}@{downloadLocation}"
+        self.client.send(send_data.encode(FORMAT))
+        
 app = QApplication(sys.argv)
 mainWindow = MainWindow()
 widget = QtWidgets.QStackedWidget()

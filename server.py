@@ -30,6 +30,16 @@ def handle_client(conn, addr):
 
             send_data = "OK@File uploaded successfully."
             conn.send(send_data.encode(FORMAT))
+        
+        elif cmd == "DOWNLOAD":
+            name, text, path = data[1], data[2], data[3]
+            filepath = os.path.join(path, name)
+            print(filepath, "dsad")
+            with open(filepath, "w") as f:
+                f.write(text)
+
+            send_data = "OK@File downloaded successfully."
+            conn.send(send_data.encode(FORMAT))
 
         elif cmd == "DELETE":
             files = os.listdir(SERVER_DATA_PATH)
@@ -40,7 +50,7 @@ def handle_client(conn, addr):
                 send_data += "The server directory is empty"
             else:
                 if filename in files:
-                    os.system(f"rm {SERVER_DATA_PATH}/{filename}")
+                    os.system(f"rm '{SERVER_DATA_PATH}/{filename}'")
                     send_data += "File deleted successfully."
                 else:
                     send_data += "File not found."
