@@ -22,13 +22,12 @@ def handle_client(conn, addr):
             else:
                 send_data += "\n".join(f for f in files)
             conn.send(send_data.encode(FORMAT))
-        ###############################################################
+        
         elif cmd == "UPLOAD":
-            name=data[1]
+            name = data[1]
             filepath = os.path.join(SERVER_DATA_PATH, name)
             filesize = int(data[2])
 
-            # f = open(filepath,'wb')
             with open(filepath, "wb") as f:
                 start_time = time.time()
 
@@ -45,18 +44,31 @@ def handle_client(conn, addr):
 
                 end_time = time.time()
             
-            print("File transfer Complete. Transfer time: " + "{:.2f}".format(end_time - start_time) + "s")
+            print("File DOWNLOAD Complete. Transfer time: " + "{:.2f}".format(end_time - start_time) + "s")
         
         elif cmd == "DOWNLOAD":
-            name, text, path = data[1], data[2], data[3]
-            filepath = os.path.join(path, name)
-            print(filepath, "dsad")
-            with open(filepath, "wb") as f:
-                f.write(text)
+            name, fileSize, path = data[1], data[2], data[3]
+            filePath = os.path.join(path, name)
+            fileSize = int(data[2])
 
-            send_data = "OK@File downloaded successfully."
-            conn.send(send_data.encode(FORMAT))
-        ###############################################################
+            with open(filePath, "wb") as f:
+                start_time = time.time()
+
+                data = conn.recv(SIZE)
+                totalRecv = len(data)
+                f.write(data)
+
+                while totalRecv < fileSize:
+                    data = conn.recv(SIZE)
+                    totalRecv+=len(data)
+                    f.write(data)
+                    # print("{0:.2f}".format((totalRecv/float(filesize))
+                    # *100)+"% DONE")
+
+                end_time = time.time()
+            
+            print("File UPLOAD Complete. Transfer time: " + "{:.2f}".format(end_time - start_time) + "s")
+        
         elif cmd == "DELETE":
             files = os.listdir(SERVER_DATA_PATH)
             send_data = "OK@"

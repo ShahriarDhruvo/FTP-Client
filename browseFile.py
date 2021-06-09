@@ -99,7 +99,7 @@ class MainWindow(QDialog):
                 self.filesLayout(i, data[i])
         else:
             self.statusBox.setText(f"[{data[0]}]: " + data[1])
-    ###############################################################    
+    
     def uploadFile(self):
         path = self.fileLocation.text()
 
@@ -123,7 +123,7 @@ class MainWindow(QDialog):
                 
                 end_time = time.time()
 
-            self.statusBox.setText("File transfer Complete. Transfer time: " + "{:.2f}".format(end_time - start_time) + "s")
+            self.statusBox.setText("File UPLOAD Complete. Transfer time: " + "{:.2f}".format(end_time - start_time) + "s")
             self.fileLocation.setText(None)
             # self.listFiles()
     
@@ -132,13 +132,23 @@ class MainWindow(QDialog):
 
         path = f"server_data/{fileName}"
 
-        with open(f"{path}", "rb") as f:
-            text = f.read()
+        fileSize = str(os.path.getsize(path))
 
-        filename = path.split("/")[-1]
-        send_data = f"DOWNLOAD@{filename}@{text}@{downloadLocation}"
+        send_data = f"DOWNLOAD@{fileName}@{fileSize}@{downloadLocation}"
         self.client.send(send_data.encode(FORMAT))
-    ###############################################################
+
+        with open(path, "rb") as f:
+            start_time = time.time()
+
+            bytesToSend = f.read(SIZE)
+            self.client.send(bytesToSend)
+            while len(bytesToSend) !=0:
+                bytesToSend = f.read(SIZE)
+                self.client.send(bytesToSend)
+            
+            end_time = time.time()
+        
+        self.statusBox.setText("File DOWNLOAD Complete. Transfer time: " + "{:.2f}".format(end_time - start_time) + "s")
     
     def update(self):
         data = self.client.recv(SIZE).decode(FORMAT).split("@")
