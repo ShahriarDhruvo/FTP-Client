@@ -8,7 +8,6 @@ from PyQt5.QtWidgets import (QDialog, QApplication, QFileDialog,
                              QLabel, QPushButton, QGridLayout)
 
 from constants import *
-# from client import *
 
 class MainWindow(QDialog):
     def __init__(self):
@@ -17,20 +16,24 @@ class MainWindow(QDialog):
 
         # Default Address
         self.ipField.setText(socket.gethostbyname(socket.gethostname()))
-        self.portField.setText("4456")
+        self.portField.setText(f"{PORT}")
 
+        # Some Action Buttons
         self.browse.clicked.connect(self.browseFiles)
         self.connect.clicked.connect(self.connectClient)
         self.upload.clicked.connect(self.uploadFile)
 
+        # ScrollArea Lauout
         self.fileListLayout = QGridLayout()
+        self.fileListLayout.setAlignment(Qt.AlignTop)
+        self.fileListLayout.setVerticalSpacing(15)
         self.scrollArea.setLayout(self.fileListLayout)
         
-        # Initial Connect
+        # Initial Connect by default address
         self.connectClient()
 
+    # Server Connection
     def connectClient(self):
-        # Server Connection
         try:
             IP = self.ipField.text()
             PORT = int(self.portField.text())
@@ -57,12 +60,14 @@ class MainWindow(QDialog):
         except:
             self.statusBox.setText(f"[ERROR]: Invalid Address")
 
+    # Handle browse button functionality
     def browseFiles(self):
         fname = QFileDialog.getOpenFileName(self, "Select File", "/")
         self.fileLocation.setText(fname[0])
 
+    # Handle file style and create download delete buttons
     def filesLayout(self, index, fileName):
-        fileNameLabel = QLabel(" " + fileName, self)
+        fileNameLabel = QLabel(fileName, self)
         fileNameLabel.setAlignment(Qt.AlignCenter)
         fileNameLabel.setStyleSheet("QLabel"
                             "{"
@@ -73,12 +78,12 @@ class MainWindow(QDialog):
         
         # Action Buttons                                
         downloadButton = QPushButton('Download', self)
-        downloadButton.setStyleSheet("background-color: #8081e8")
+        downloadButton.setStyleSheet("background-color: #5bc0de; color: white")
 
         downloadButton.clicked.connect(lambda: self.downloadFile(fileName))
 
         deleteButton = QPushButton('Delete', self)
-        deleteButton.setStyleSheet("background-color: #ed727d")
+        deleteButton.setStyleSheet("background-color: #d9534f; color: white")
 
         deleteButton.clicked.connect(lambda: self.deleteFile(fileName))
 
@@ -91,6 +96,11 @@ class MainWindow(QDialog):
         self.client.send("LIST".encode(FORMAT))
         data = self.client.recv(SIZE).decode(FORMAT)
         data = data.split("@")
+        
+        # Clear all previous widget
+        if data:
+            for i in reversed(range(self.fileListLayout.count())):
+                self.fileListLayout.itemAt(i).widget().setParent(None)
 
         if(data[0] != "NULL"):
             data = data[1].split("\n")
@@ -125,7 +135,9 @@ class MainWindow(QDialog):
 
             self.statusBox.setText("File UPLOAD Complete. Transfer time: " + "{:.2f}".format(end_time - start_time) + "s")
             self.fileLocation.setText(None)
-            # self.listFiles()
+            
+            time.sleep(WAIT_TIME)
+            self.listFiles()
     
     def downloadFile(self, fileName):
         downloadLocation = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
@@ -150,15 +162,14 @@ class MainWindow(QDialog):
         
         self.statusBox.setText("File DOWNLOAD Complete. Transfer time: " + "{:.2f}".format(end_time - start_time) + "s")
     
-    def update(self):
-        data = self.client.recv(SIZE).decode(FORMAT).split("@")
-        self.statusBox.setText(f"[{data[0]}]: {data[1]}")
-        self.listFiles()
-
     def deleteFile(self, fileName):
         self.client.send(f"DELETE@{fileName}".encode(FORMAT))
 
-        # self.update()
+        data = self.client.recv(SIZE).decode(FORMAT).split("@")
+        self.statusBox.setText(f"[{data[0]}]: {data[1]}")
+        
+        time.sleep(WAIT_TIME)
+        self.listFiles()
         
 app = QApplication(sys.argv)
 mainWindow = MainWindow()

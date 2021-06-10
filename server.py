@@ -10,6 +10,10 @@ def handle_client(conn, addr):
 
     while True:
         data = conn.recv(SIZE).decode(FORMAT)
+        
+        if data:
+            print(data + ".....")
+        
         data = data.split("@")
         cmd = data[0]
 
@@ -25,6 +29,10 @@ def handle_client(conn, addr):
         
         elif cmd == "UPLOAD":
             name = data[1]
+            
+            files = os.listdir(SERVER_DATA_PATH)
+            name = name.split(".")[0] + "_(" + str(len(files)) + ")." + name.split(".")[1]
+            
             filepath = os.path.join(SERVER_DATA_PATH, name)
             filesize = int(data[2])
 
@@ -37,7 +45,7 @@ def handle_client(conn, addr):
 
                 while totalRecv < filesize:
                     data = conn.recv(SIZE)
-                    totalRecv+=len(data)
+                    totalRecv += len(data)
                     f.write(data)
                     # print("{0:.2f}".format((totalRecv/float(filesize))
                     # *100)+"% DONE")
@@ -78,7 +86,8 @@ def handle_client(conn, addr):
                 send_data += "The server directory is empty"
             else:
                 if filename in files:
-                    os.system(f"rm '{SERVER_DATA_PATH}/{filename}'")
+                    # os.system(f"rm '{SERVER_DATA_PATH}/{filename}'")
+                    os.remove(f"{SERVER_DATA_PATH}/{filename}")
                     send_data += "File deleted successfully."
                 else:
                     send_data += "File not found."
@@ -101,17 +110,21 @@ def handle_client(conn, addr):
     conn.close()
 
 def main():
-    print("[STARTING]: Server is starting")
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(ADDR)
-    server.listen()
-    print(f"[LISTENING]: Server is listening on {IP}:{PORT}.")
+    try:
+        print("[STARTING]: Server is starting")
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.bind(ADDR)
+        server.listen()
+        print(f"[LISTENING]: Server is listening on {IP}:{PORT}.")
 
-    while True:
-        conn, addr = server.accept()
-        thread = threading.Thread(target=handle_client, args=(conn, addr))
-        thread.start()
-        print(f"[ACTIVE CONNECTIONS]: {threading.activeCount() - 1}")
+        while True:
+            conn, addr = server.accept()
+            thread = threading.Thread(target=handle_client, args=(conn, addr))
+            thread.start()
+            print(f"[ACTIVE CONNECTIONS]: {threading.activeCount() - 1}")
+
+    except socket.error as error:
+        print(error)
 
 if __name__ == "__main__":
     main()
