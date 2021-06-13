@@ -10,7 +10,6 @@ WAIT_TIME = 1
 IP = socket.gethostbyname(socket.gethostname())
 PORT = 4457
 
-ADDR = (IP, PORT)
 SIZE = 1024
 FORMAT = "utf-8"
 SERVER_DATA_PATH = "server_data"

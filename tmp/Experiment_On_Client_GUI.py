@@ -1,13 +1,29 @@
 import os
 import sys
 import time
+import socket
 from PyQt5.QtCore import *
 from PyQt5 import QtWidgets
 from PyQt5.uic import loadUi
 from PyQt5.QtWidgets import (QDialog, QApplication, QFileDialog, 
                              QLabel, QPushButton, QGridLayout)
 
-from constants import *
+# from constants import *
+# GUI Window height, width
+WINDOW_WIDTH = 853
+WINDOW_HEIGHT = 767
+
+# Time to wait to process previous connection
+WAIT_TIME = 1
+
+IP = socket.gethostbyname(socket.gethostname())
+PORT = 4457
+
+ADDR = (IP, PORT)
+SIZE = 1024
+FORMAT = "utf-8"
+SERVER_DATA_PATH = "server_data"
+
 
 class MainWindow(QDialog):
     def __init__(self):
@@ -15,8 +31,8 @@ class MainWindow(QDialog):
         loadUi("gui.ui", self)
 
         # Default Address
-        self.ipField.setText(socket.gethostbyname(socket.gethostname()))
-        self.portField.setText(f"{PORT}")
+        self.ipField.setText(IP)
+        self.portField.setText(str(PORT))
 
         # Some Action Buttons
         self.browse.clicked.connect(self.browseFiles)
@@ -30,35 +46,70 @@ class MainWindow(QDialog):
         self.scrollArea.setLayout(self.fileListLayout)
         
         # Initial Connect by default address
-        self.connectClient()
+        #self.connectClient()
 
-    # Server Connection
+    # # actual Server Connection
+
+    # def connectClient(self):
+    #     try:
+    #         IP = self.ipField.text()
+    #         PORT = int(self.portField.text())
+
+    #         ADDR = (IP, PORT)
+
+    #         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #         self.client.connect(ADDR)
+
+    #         data = self.client.recv(SIZE).decode(FORMAT)
+    #         cmd, msg = data.split("@")
+
+    #         if cmd == "DISCONNECTED":
+    #             # self.statusBox.setText(f"[SERVER]: {msg}\n" +
+    #             # "[DISCONNECTED]: Disconnected from the server")
+    #             self.client.close()
+    #         elif cmd == "OK":
+    #             self.statusBox.setText(f"[SUCCESS]: {msg}")
+            
+    #         self.listFiles()
+            
+    #     except socket.error as error:
+    #         self.statusBox.setText(f"{error}")
+    #     except:
+    #         self.statusBox.setText(f"[ERROR]: Invalid Address")
+
+    # # # # # experiment on connectClient()
+
     def connectClient(self):
         try:
-            IP = self.ipField.text()
-            PORT = int(self.portField.text())
+            # thread=threading.Thread(target=self.function, args =(self))
+            # thread.start()
+            self.function()
 
-            ADDR = (IP, PORT)
-
-            self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.client.connect(ADDR)
-
-            data = self.client.recv(SIZE).decode(FORMAT)
-            cmd, msg = data.split("@")
-
-            if cmd == "DISCONNECTED":
-                # self.statusBox.setText(f"[SERVER]: {msg}\n" +
-                # "[DISCONNECTED]: Disconnected from the server")
-                self.client.close()
-            elif cmd == "OK":
-                self.statusBox.setText(f"[SUCCESS]: {msg}")
-            
-            self.listFiles()
-            
         except socket.error as error:
             self.statusBox.setText(f"{error}")
         except:
             self.statusBox.setText(f"[ERROR]: Invalid Address")
+
+    def function(self):
+        IP = self.ipField.text()
+        PORT = int(self.portField.text())
+        ADDR = (IP,PORT)
+        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client.connect(ADDR)
+
+        data = self.client.recv(SIZE).decode(FORMAT)
+        cmd, msg = data.split("@")
+
+        if cmd == "DISCONNECTED":
+            # self.statusBox.setText(f"[SERVER]: {msg}\n" +
+            # "[DISCONNECTED]: Disconnected from the server")
+            self.client.close()
+        elif cmd == "OK":
+            self.statusBox.setText(f"[SUCCESS]: {msg}")
+        
+        self.listFiles()
+
+    # # # experiment ends
 
     # Handle browse button functionality
     def browseFiles(self):

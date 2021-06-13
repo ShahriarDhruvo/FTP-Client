@@ -51,8 +51,10 @@ class MainWindow(QDialog):
             self.server.listen()
             self.statusBox.setText(f"[LISTENING]: Server is listening on {IP} : {PORT}.")
             print(f"[LISTENING]: Server is listening on {IP}:{PORT}.")
+
             thread=threading.Thread(target=self.function, args =())
             thread.start()
+            
             print(".............|..........")
 
     
