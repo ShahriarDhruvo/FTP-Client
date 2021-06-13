@@ -37,3 +37,4 @@ widget.setFixedWidth(WINDOW_WIDTH)
 widget.setFixedHeight(WINDOW_HEIGHT)
 widget.show()
 sys.exit(app.exec_())
+
