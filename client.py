@@ -22,13 +22,16 @@ class MainWindow(QDialog):
         loadUi("clientGUI.ui", self)
 
         # Default Address
-        self.ipField.setText(socket.gethostbyname(socket.gethostname()))
-        self.portField.setText(f"{PORT}")
+        # socket.gethostbyname(socket.gethostname())
+        # f"{PORT}"
+        self.ipField.setText("")
+        self.portField.setText("")
 
         # Some Action Buttons
         self.browse.clicked.connect(self.browseFiles)
         self.connect.clicked.connect(self.connectClient)
         self.upload.clicked.connect(self.uploadFile)
+        self.logout.clicked.connect(self.logout_fun)
 
         # ScrollArea Layout
         self.fileListLayout = QGridLayout()
@@ -37,7 +40,7 @@ class MainWindow(QDialog):
         self.scrollArea.setLayout(self.fileListLayout)
 
         # Initial Connect by default address
-        self.connectClient()
+        #self.connectClient()
 
     # Server Connection
     def connectClient(self):
@@ -209,6 +212,23 @@ class MainWindow(QDialog):
 
         time.sleep(WAIT_TIME)
         self.listFiles()
+    
+    # # new features
+
+    # to clear scroll area
+    def emptyList(self):
+        for i in reversed(range(self.fileListLayout.count())):
+            self.fileListLayout.itemAt(i).widget().setParent(None)
+
+    # this method handles logout functionality
+    def logout_fun(self):
+        self.client.send("LOGOUT".encode(FORMAT))
+        self.ipField.setText("")
+        self.portField.setText("")
+        print("[DISCONNECTED] Disconnected from the server.")
+        self.client.close()
+        self.emptyList()
+        #sys.exit()
 
 app = QApplication(sys.argv)
 mainWindow = MainWindow()

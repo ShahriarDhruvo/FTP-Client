@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">QDialog#Dialog{
+background-color:qlineargradient(spread:pad, x1:1, y1:1, x2:1, y2:0, stop:0 rgba(118, 118, 118, 255), stop:1 rgba(255, 255, 255, 255));}</string>
+  </property>
   <widget class="QLineEdit" name="fileLocation">
    <property name="geometry">
     <rect>
@@ -21,6 +25,9 @@
      <width>491</width>
      <height>34</height>
     </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color:white</string>
    </property>
   </widget>
   <widget class="QPushButton" name="browse">
@@ -58,6 +65,9 @@
      <height>34</height>
     </rect>
    </property>
+   <property name="styleSheet">
+    <string notr="true">background-color:white</string>
+   </property>
   </widget>
   <widget class="QLineEdit" name="portField">
    <property name="geometry">
@@ -67,6 +77,9 @@
      <width>113</width>
      <height>34</height>
     </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color:white</string>
    </property>
   </widget>
   <widget class="QPushButton" name="connect">
@@ -91,24 +104,27 @@
      <height>91</height>
     </rect>
    </property>
+   <property name="styleSheet">
+    <string notr="true">background-color:white</string>
+   </property>
   </widget>
   <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
      <x>350</x>
      <y>630</y>
-     <width>131</width>
+     <width>161</width>
      <height>22</height>
     </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">font: 75 12pt &quot;MS Shell Dlg 2&quot;;color:white</string>
    </property>
    <property name="text">
     <string>Application Status</string>
    </property>
   </widget>
   <widget class="QScrollArea" name="scrollArea">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -116,6 +132,10 @@
      <width>811</width>
      <height>451</height>
     </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color:white
+</string>
    </property>
    <property name="widgetResizable">
     <bool>true</bool>
@@ -125,8 +145,8 @@
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>805</width>
-      <height>445</height>
+      <width>809</width>
+      <height>449</height>
      </rect>
     </property>
    </widget>
@@ -135,10 +155,14 @@
    <property name="geometry">
     <rect>
      <x>380</x>
-     <y>140</y>
-     <width>81</width>
-     <height>22</height>
+     <y>130</y>
+     <width>101</width>
+     <height>31</height>
     </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">font: 75 10pt &quot;MS Shell Dlg 2&quot;;
+font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
    </property>
    <property name="text">
     <string>Server Files</string>
@@ -152,6 +176,10 @@
      <width>81</width>
      <height>31</height>
     </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QDialog#lable_3{
+background-color:qlineargradient(spread:pad, x1:1, y1:1, x2:1, y2:0, stop:0 rgba(118, 118, 118, 255), stop:1 rgba(255, 255, 255, 255));}</string>
    </property>
    <property name="text">
     <string>IP Address:</string>
