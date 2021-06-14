@@ -2,7 +2,7 @@ import os
 import sys
 import time
 import threading
-from PyQt5.QtCore import *
+from PyQt5.QtCore import QThread, pyqtSignal, Qt
 from PyQt5 import QtWidgets
 from PyQt5.uic import loadUi
 from PyQt5.QtWidgets import (
@@ -62,7 +62,7 @@ class MainWindow(QDialog):
         files = os.listdir(SERVER_DATA_PATH)
 
         if len(files) == 0:
-            self.handleStatus("The server directory is empty")
+            self.filesLayout(0, "", True)
         else:
             data = next(os.walk(SERVER_DATA_PATH), (None, None, []))[2]
 
@@ -70,32 +70,54 @@ class MainWindow(QDialog):
                 self.filesLayout(i, data[i])
 
     # Handle file style and create download delete buttons
-    def filesLayout(self, index, fileName):
-        fileNameLabel = QLabel(fileName, self)
-        fileNameLabel.setAlignment(Qt.AlignCenter)
-        fileNameLabel.setStyleSheet(
-            "QLabel"
-            "{"
-            "border: 1px hidden grey;"
-            "border-radius: 2px;"
-            "background-color: lightgrey;"
-            "}"
-        )
+    def filesLayout(self, index, fileName, empty=False):
+        if not empty:
+            fileNameLabel = QLabel(fileName, self)
+            fileNameLabel.setAlignment(Qt.AlignCenter)
+            fileNameLabel.setStyleSheet(
+                "QLabel"
+                "{"
+                "border: 1px hidden grey;"
+                "border-radius: 2px;"
+                "background-color: lightgrey;"
+                "}"
+            )
 
-        # Action Buttons
-        downloadButton = QPushButton("Download", self)
-        downloadButton.setStyleSheet("background-color: #5bc0de; color: white")
+            # Action Buttons
+            deleteButton = QPushButton("Delete", self)
+            deleteButton.setStyleSheet("background-color: #d9534f; color: white")
 
-        downloadButton.clicked.connect(lambda: self.downloadFile(fileName))
+            deleteButton.clicked.connect(lambda: self.deleteFile(fileName))
 
-        deleteButton = QPushButton("Delete", self)
-        deleteButton.setStyleSheet("background-color: #d9534f; color: white")
+            self.fileListLayout.addWidget(fileNameLabel, index, 0, 1, 4)
+            self.fileListLayout.addWidget(deleteButton, index, 5)
+        else:
+            fileNameLabel = QLabel("The server directory is empty", self)
+            fileNameLabel.setAlignment(Qt.AlignCenter)
+            fileNameLabel.setFixedHeight(40)
+            fileNameLabel.setStyleSheet(
+                "QLabel"
+                "{"
+                "border: 1px hidden grey;"
+                "border-radius: 2px;"
+                "background-color: lightgrey;"
+                "}"
+            )
 
-        deleteButton.clicked.connect(lambda: self.deleteFile(fileName))
+            self.fileListLayout.addWidget(fileNameLabel, 0, 1)
 
-        self.fileListLayout.addWidget(fileNameLabel, index, 0, 1, 3)
-        self.fileListLayout.addWidget(downloadButton, index, 4)
-        self.fileListLayout.addWidget(deleteButton, index, 5)
+    def deleteFile(self, fileName):
+        files = os.listdir(SERVER_DATA_PATH)
+        status = ""
+
+        if fileName in files:
+            os.remove(f"{SERVER_DATA_PATH}/{fileName}")
+            status += "File deleted successfully"
+        else:
+            status += "File not found"
+
+        self.handleStatus(status)
+        self.listFiles()
 
     # Starting Server Connection
     def startServer(self):
@@ -129,7 +151,9 @@ class MainWindow(QDialog):
             try:
                 conn, addr = self.server.accept()
 
-                clientThread = threading.Thread(target=self.handleClient, args=(conn, addr))
+                clientThread = threading.Thread(
+                    target=self.handleClient, args=(conn, addr)
+                )
                 clientThread.start()
 
                 self.clientCount.setText(str(threading.activeCount() - 2))
@@ -240,9 +264,7 @@ class MainWindow(QDialog):
                 send_data = "OK@"
                 filename = data[1]
 
-                if len(files) == 0:
-                    send_data += "The server directory is empty"
-                elif filename in files:
+                if filename in files:
                     os.remove(f"{SERVER_DATA_PATH}/{filename}")
                     send_data += "File deleted successfully"
                 else:
@@ -252,12 +274,12 @@ class MainWindow(QDialog):
 
             elif cmd == "FINISHED":
                 thread = UpdateThread()
-                thread.update_status.connect(self.listFiles)
+                thread.update.connect(self.listFiles)
                 thread.start()
-            
+
             elif cmd == "LOGOUT":
                 break
-                
+
             elif cmd == "HELP":
                 data = "OK@"
                 data += "LIST: List all the files from the server.\n"
@@ -278,15 +300,17 @@ class MainWindow(QDialog):
 
         conn.close()
 
+
 class UpdateThread(QThread):
-    update_status = pyqtSignal(str)
+    update = pyqtSignal(str)
 
     def __init__(self, status="", parent=None):
         QThread.__init__(self, parent)
         self.status = status
 
     def run(self):
-        self.update_status.emit(self.status)
+        self.update.emit(self.status)
+
 
 app = QApplication(sys.argv)
 mainWindow = MainWindow()

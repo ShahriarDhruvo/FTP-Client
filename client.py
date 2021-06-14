@@ -1,7 +1,7 @@
 import os
 import sys
 import time
-from PyQt5.QtCore import *
+from PyQt5.QtCore import Qt
 from PyQt5 import QtWidgets
 from PyQt5.uic import loadUi
 from PyQt5.QtWidgets import (
@@ -73,32 +73,47 @@ class MainWindow(QDialog):
         self.fileLocation.setText(fname[0])
 
     # Handle file style and create download delete buttons
-    def filesLayout(self, index, fileName):
-        fileNameLabel = QLabel(fileName, self)
-        fileNameLabel.setAlignment(Qt.AlignCenter)
-        fileNameLabel.setStyleSheet(
-            "QLabel"
-            "{"
-            "border: 1px hidden grey;"
-            "border-radius: 2px;"
-            "background-color: lightgrey;"
-            "}"
-        )
+    def filesLayout(self, index, fileName, empty=False):
+        if not empty:
+            fileNameLabel = QLabel(fileName, self)
+            fileNameLabel.setAlignment(Qt.AlignCenter)
+            fileNameLabel.setStyleSheet(
+                "QLabel"
+                "{"
+                "border: 1px hidden grey;"
+                "border-radius: 2px;"
+                "background-color: lightgrey;"
+                "}"
+            )
 
-        # Action Buttons
-        downloadButton = QPushButton("Download", self)
-        downloadButton.setStyleSheet("background-color: #5bc0de; color: white")
+            # Action Buttons
+            downloadButton = QPushButton("Download", self)
+            downloadButton.setStyleSheet("background-color: #5bc0de; color: white")
 
-        downloadButton.clicked.connect(lambda: self.downloadFile(fileName))
+            downloadButton.clicked.connect(lambda: self.downloadFile(fileName))
 
-        deleteButton = QPushButton("Delete", self)
-        deleteButton.setStyleSheet("background-color: #d9534f; color: white")
+            deleteButton = QPushButton("Delete", self)
+            deleteButton.setStyleSheet("background-color: #d9534f; color: white")
 
-        deleteButton.clicked.connect(lambda: self.deleteFile(fileName))
+            deleteButton.clicked.connect(lambda: self.deleteFile(fileName))
 
-        self.fileListLayout.addWidget(fileNameLabel, index, 0, 1, 3)
-        self.fileListLayout.addWidget(downloadButton, index, 4)
-        self.fileListLayout.addWidget(deleteButton, index, 5)
+            self.fileListLayout.addWidget(fileNameLabel, index, 0, 1, 3)
+            self.fileListLayout.addWidget(downloadButton, index, 4)
+            self.fileListLayout.addWidget(deleteButton, index, 5)
+        else:
+            fileNameLabel = QLabel("The server directory is empty", self)
+            fileNameLabel.setAlignment(Qt.AlignCenter)
+            fileNameLabel.setFixedHeight(40)
+            fileNameLabel.setStyleSheet(
+                "QLabel"
+                "{"
+                "border: 1px hidden grey;"
+                "border-radius: 2px;"
+                "background-color: lightgrey;"
+                "}"
+            )
+
+            self.fileListLayout.addWidget(fileNameLabel, 0, 1)
 
     # Show Server Files
     def listFiles(self):
@@ -117,7 +132,7 @@ class MainWindow(QDialog):
             for i in range(len(data)):
                 self.filesLayout(i, data[i])
         else:
-            self.statusBox.setText(f"[{data[0]}]: " + data[1])
+            self.filesLayout(0, "", True)
         
         # To Refresh server side's file list
         self.client.send("FINISHED".encode(FORMAT))
@@ -139,6 +154,7 @@ class MainWindow(QDialog):
 
                 bytesToSend = f.read(SIZE)
                 self.client.send(bytesToSend)
+
                 while len(bytesToSend) != 0:
                     bytesToSend = f.read(SIZE)
                     self.client.send(bytesToSend)
@@ -172,6 +188,7 @@ class MainWindow(QDialog):
 
             bytesToSend = f.read(SIZE)
             self.client.send(bytesToSend)
+
             while len(bytesToSend) != 0:
                 bytesToSend = f.read(SIZE)
                 self.client.send(bytesToSend)
@@ -192,7 +209,6 @@ class MainWindow(QDialog):
 
         time.sleep(WAIT_TIME)
         self.listFiles()
-
 
 app = QApplication(sys.argv)
 mainWindow = MainWindow()
