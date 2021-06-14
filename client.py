@@ -229,7 +229,7 @@ class MainWindow(QDialog):
         self.client.close()
         self.emptyList()
 
-        sys.exit()
+        #sys.exit()
 
 
 app = QApplication(sys.argv)
