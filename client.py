@@ -22,11 +22,11 @@ class MainWindow(QDialog):
         loadUi("clientGUI.ui", self)
 
         # Default Address
-        self.ipField.setText(str(IP))
-        self.portField.setText(str(PORT))
+        #self.ipField.setText(str(IP))
+        #self.portField.setText(str(PORT))
 
-        # self.ipField.setText("")
-        # self.portField.setText("")
+        self.ipField.setText("")
+        self.portField.setText("")
 
         # Some Action Buttons
         self.browse.clicked.connect(self.browseFiles)
@@ -41,7 +41,7 @@ class MainWindow(QDialog):
         self.scrollArea.setLayout(self.fileListLayout)
 
         # Initial Connect by default address
-        self.connectClient()
+        #self.connectClient()
 
     # Server Connection
     def connectClient(self):

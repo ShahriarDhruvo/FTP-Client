@@ -43,7 +43,7 @@ class MainWindow(QDialog):
         self.scrollArea.setLayout(self.fileListLayout)
 
         # Initial Connect by default address
-        self.startServer()
+        #self.startServer()
 
     def stopServer(self):
         self.handleStatus("[STOP]: The server has been stopped")
