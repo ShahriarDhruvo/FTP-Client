@@ -171,16 +171,12 @@ class MainWindow(QDialog):
             #     self.statusThread.start()
 
     def handleClient(self, conn, addr):
-        status = f"[NEW CONNECTION]: {addr} connected\n"
-        print(f"[NEW CONNECTION]: {addr} connected")
+        status = f"[NEW CONNECTION]: {addr} connected"
 
         conn.send("OK@Welcome to the File Server".encode(FORMAT))
 
         while True:
             data = conn.recv(SIZE).decode(FORMAT)
-
-            # if data:
-            #     status += data + ".....\n"
 
             data = data.split("@")
             cmd = data[0]
@@ -272,6 +268,8 @@ class MainWindow(QDialog):
 
                 conn.send(send_data.encode(FORMAT))
 
+                status += f"{filename} has been deleted"
+
             elif cmd == "FINISHED":
                 thread = UpdateThread()
                 thread.update.connect(self.listFiles)
@@ -290,9 +288,12 @@ class MainWindow(QDialog):
 
                 conn.send(data.encode(FORMAT))
 
-            # self.statusThread = StatusThread(self, status)
-            # self.statusThread.update_status.connect(self.handleStatus)
-            # self.statusThread.start()
+            if status:
+                self.statusThread = UpdateThread(status, self)
+                self.statusThread.update.connect(self.handleStatus)
+                self.statusThread.start()
+
+                status = ""
 
         # self.statusThread = StatusThread(f"[DISCONNECTED]: {addr} disconnected")
         # self.statusThread.update_status.connect(self.handleStatus)
