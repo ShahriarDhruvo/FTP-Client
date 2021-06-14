@@ -48,15 +48,13 @@ class MainWindow(QDialog):
 
     # Status handler
     def handleStatus(self, text):
-        self.status_text += str(text) + "\n"
-        self.statusBox.setText(self.status_text)
-
-        print(text)
-
-    def listFiles(self, text=""):
         if text:
-            self.handleStatus(text)
+            self.status_text += str(text) + "\n"
+            self.statusBox.setText(self.status_text)
 
+            print(text)
+
+    def listFiles(self):
         # Clear all the widgets from the scrollArea
         for i in reversed(range(self.fileListLayout.count())):
             self.fileListLayout.itemAt(i).widget().setParent(None)
@@ -103,6 +101,7 @@ class MainWindow(QDialog):
     def startServer(self):
         try:
             self.handleStatus("[STARTING]: Server is starting")
+            self.clientCount.setText(str(0))
 
             IP = self.ipField.text()
             PORT = int(self.portField.text())
@@ -115,8 +114,8 @@ class MainWindow(QDialog):
 
             self.handleStatus(f"[LISTENING]: Server is listening on {IP} : {PORT}")
 
-            thread = threading.Thread(target=self.checkConnection)
-            thread.start()
+            connectionThread = threading.Thread(target=self.checkConnection)
+            connectionThread.start()
 
             self.listFiles()
 
@@ -130,36 +129,34 @@ class MainWindow(QDialog):
             try:
                 conn, addr = self.server.accept()
 
-                thread = threading.Thread(target=self.handleClient, args=(conn, addr))
-                thread.start()
+                clientThread = threading.Thread(target=self.handleClient, args=(conn, addr))
+                clientThread.start()
 
-                status = f"OK@[ACTIVE CONNECTIONS]: {threading.activeCount() - 2}"
+                self.clientCount.setText(str(threading.activeCount() - 2))
+
             except socket.error as error:
-                status = f"ERROR@{error}"
+                status = str(error)
 
             except:
-                status = "ERROR@[Error]: Unknown connection error, try again..."
+                status = "[Error]: Unknown connection error, try again..."
 
-            cmd, msg = status.split("@")
-
-            # So that we can call parent thread's handleStatus function from a child thread
-            statusThread = StatusThread(msg)
-            statusThread.update_status.connect(self.handleStatus)
-            statusThread.start()
-
-            if cmd != "OK":
-                break
+            # if status:
+            #     # So that we can call parent thread's handleStatus function from a child thread
+            #     self.statusThread = StatusThread(status)
+            #     self.statusThread.update_status.connect(self.handleStatus)
+            #     self.statusThread.start()
 
     def handleClient(self, conn, addr):
         status = f"[NEW CONNECTION]: {addr} connected\n"
+        print(f"[NEW CONNECTION]: {addr} connected")
 
         conn.send("OK@Welcome to the File Server".encode(FORMAT))
 
         while True:
             data = conn.recv(SIZE).decode(FORMAT)
 
-            if data:
-                status += data + ".....\n"
+            # if data:
+            #     status += data + ".....\n"
 
             data = data.split("@")
             cmd = data[0]
@@ -208,7 +205,7 @@ class MainWindow(QDialog):
                 status += (
                     "File DOWNLOAD Complete. Transfer time: "
                     + "{:.2f}".format(end_time - start_time)
-                    + "s\n"
+                    + "s"
                 )
 
             elif cmd == "DOWNLOAD":
@@ -235,7 +232,7 @@ class MainWindow(QDialog):
                 status += (
                     "File UPLOAD Complete. Transfer time: "
                     + "{:.2f}".format(end_time - start_time)
-                    + "s\n"
+                    + "s"
                 )
 
             elif cmd == "DELETE":
@@ -245,26 +242,22 @@ class MainWindow(QDialog):
 
                 if len(files) == 0:
                     send_data += "The server directory is empty"
+                elif filename in files:
+                    os.remove(f"{SERVER_DATA_PATH}/{filename}")
+                    send_data += "File deleted successfully"
                 else:
-                    if filename in files:
-                        # os.system(f"rm '{SERVER_DATA_PATH}/{filename}'")
-                        os.remove(f"{SERVER_DATA_PATH}/{filename}")
-                        send_data += "File deleted successfully."
-                    else:
-                        send_data += "File not found."
+                    send_data += "File not found"
 
                 conn.send(send_data.encode(FORMAT))
 
+            elif cmd == "FINISHED":
+                thread = UpdateThread()
+                thread.update_status.connect(self.listFiles)
+                thread.start()
+            
             elif cmd == "LOGOUT":
                 break
-
-            elif cmd == "FINISHED":
-                statusThread = StatusThread("[UPDATE]: Updated file's list...")
-                statusThread.update_status.connect(self.listFiles)
-                statusThread.start()
                 
-                time.sleep(WAIT_TIME)
-
             elif cmd == "HELP":
                 data = "OK@"
                 data += "LIST: List all the files from the server.\n"
@@ -275,19 +268,20 @@ class MainWindow(QDialog):
 
                 conn.send(data.encode(FORMAT))
 
-            statusThread = StatusThread(status)
-            statusThread.update_status.connect(self.handleStatus)
-            statusThread.start()
+            # self.statusThread = StatusThread(self, status)
+            # self.statusThread.update_status.connect(self.handleStatus)
+            # self.statusThread.start()
 
-        statusThread = StatusThread(f"[DISCONNECTED]: {addr} disconnected")
-        statusThread.update_status.connect(self.handleStatus)
-        statusThread.start()
+        # self.statusThread = StatusThread(f"[DISCONNECTED]: {addr} disconnected")
+        # self.statusThread.update_status.connect(self.handleStatus)
+        # self.statusThread.start()
+
         conn.close()
 
-class StatusThread(QThread):
+class UpdateThread(QThread):
     update_status = pyqtSignal(str)
 
-    def __init__(self, status, parent=None):
+    def __init__(self, status="", parent=None):
         QThread.__init__(self, parent)
         self.status = status
 
