@@ -2,7 +2,7 @@ import os
 import sys
 import time
 from PyQt5.QtCore import Qt
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 from PyQt5.uic import loadUi
 from PyQt5.QtWidgets import (
     QDialog,
@@ -22,10 +22,11 @@ class MainWindow(QDialog):
         loadUi("clientGUI.ui", self)
 
         # Default Address
-        # socket.gethostbyname(socket.gethostname())
-        # f"{PORT}"
-        self.ipField.setText("")
-        self.portField.setText("")
+        self.ipField.setText(str(IP))
+        self.portField.setText(str(PORT))
+
+        # self.ipField.setText("")
+        # self.portField.setText("")
 
         # Some Action Buttons
         self.browse.clicked.connect(self.browseFiles)
@@ -40,7 +41,7 @@ class MainWindow(QDialog):
         self.scrollArea.setLayout(self.fileListLayout)
 
         # Initial Connect by default address
-        #self.connectClient()
+        self.connectClient()
 
     # Server Connection
     def connectClient(self):
@@ -126,8 +127,7 @@ class MainWindow(QDialog):
 
         # Clear all the widgets from the scrollArea if server send any updated list
         if data:
-            for i in reversed(range(self.fileListLayout.count())):
-                self.fileListLayout.itemAt(i).widget().setParent(None)
+            self.emptyList()
 
         if data[0] != "NULL":
             data = data[1].split("\n")
@@ -136,7 +136,7 @@ class MainWindow(QDialog):
                 self.filesLayout(i, data[i])
         else:
             self.filesLayout(0, "", True)
-        
+
         # To Refresh server side's file list
         self.client.send("FINISHED".encode(FORMAT))
 
@@ -212,23 +212,25 @@ class MainWindow(QDialog):
 
         time.sleep(WAIT_TIME)
         self.listFiles()
-    
-    # # new features
 
-    # to clear scroll area
+    # clear scrollArea
     def emptyList(self):
         for i in reversed(range(self.fileListLayout.count())):
             self.fileListLayout.itemAt(i).widget().setParent(None)
 
-    # this method handles logout functionality
     def logout_fun(self):
         self.client.send("LOGOUT".encode(FORMAT))
+
         self.ipField.setText("")
         self.portField.setText("")
-        print("[DISCONNECTED] Disconnected from the server.")
+
+        self.statusBox.setText("[DISCONNECTED] Disconnected from the server")
+
         self.client.close()
         self.emptyList()
-        #sys.exit()
+
+        sys.exit()
+
 
 app = QApplication(sys.argv)
 mainWindow = MainWindow()

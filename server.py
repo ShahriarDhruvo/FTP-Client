@@ -17,6 +17,9 @@ from PyQt5.QtWidgets import (
 from constants import *
 
 
+clientCount = 0
+
+
 class MainWindow(QDialog):
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -156,7 +159,12 @@ class MainWindow(QDialog):
                 )
                 clientThread.start()
 
-                self.clientCount.setText(str(threading.activeCount() - 2))
+                global clientCount
+                clientCount += 1
+                
+                self.statusThread = UpdateThread(clientCount, self)
+                self.statusThread.update.connect(self.handleClientCount)
+                self.statusThread.start()
 
             except socket.error as error:
                 status = str(error)
@@ -276,6 +284,12 @@ class MainWindow(QDialog):
                 thread.start()
 
             elif cmd == "LOGOUT":
+                global clientCount
+                clientCount -= 1
+
+                self.statusThread = UpdateThread(clientCount, self)
+                self.statusThread.update.connect(self.handleClientCount)
+                self.statusThread.start()
                 break
 
             elif cmd == "HELP":
@@ -295,11 +309,14 @@ class MainWindow(QDialog):
 
                 status = ""
 
-        # self.statusThread = StatusThread(f"[DISCONNECTED]: {addr} disconnected")
-        # self.statusThread.update_status.connect(self.handleStatus)
-        # self.statusThread.start()
+        self.statusThread = UpdateThread(f"[DISCONNECTED]: {addr} disconnected", self)
+        self.statusThread.update.connect(self.handleStatus)
+        self.statusThread.start()
 
         conn.close()
+
+    def handleClientCount(self, count):
+        self.clientCount.setText(count)
 
 
 class UpdateThread(QThread):
@@ -307,7 +324,7 @@ class UpdateThread(QThread):
 
     def __init__(self, status="", parent=None):
         QThread.__init__(self, parent)
-        self.status = status
+        self.status = str(status)
 
     def run(self):
         self.update.emit(self.status)
