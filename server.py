@@ -53,16 +53,23 @@ class MainWindow(QDialog):
 
         print(text)
 
-    def listFiles(self):
+    def listFiles(self, text=""):
+        if text:
+            self.handleStatus(text)
+
+        # Clear all the widgets from the scrollArea
+        for i in reversed(range(self.fileListLayout.count())):
+            self.fileListLayout.itemAt(i).widget().setParent(None)
+
         files = os.listdir(SERVER_DATA_PATH)
 
         if len(files) == 0:
-            data = ["The server directory is empty"]
+            self.handleStatus("The server directory is empty")
         else:
             data = next(os.walk(SERVER_DATA_PATH), (None, None, []))[2]
 
-        for i in range(len(data)):
-            self.filesLayout(i, data[i])
+            for i in range(len(data)):
+                self.filesLayout(i, data[i])
 
     # Handle file style and create download delete buttons
     def filesLayout(self, index, fileName):
@@ -91,7 +98,7 @@ class MainWindow(QDialog):
         self.fileListLayout.addWidget(fileNameLabel, index, 0, 1, 3)
         self.fileListLayout.addWidget(downloadButton, index, 4)
         self.fileListLayout.addWidget(deleteButton, index, 5)
-        
+
     # Starting Server Connection
     def startServer(self):
         try:
@@ -204,8 +211,6 @@ class MainWindow(QDialog):
                     + "s\n"
                 )
 
-                # self.listFiles()
-
             elif cmd == "DOWNLOAD":
                 name, fileSize, path = data[1], data[2], data[3]
                 filePath = os.path.join(path, name)
@@ -250,10 +255,16 @@ class MainWindow(QDialog):
 
                 conn.send(send_data.encode(FORMAT))
 
-                # self.listFiles()
-
             elif cmd == "LOGOUT":
                 break
+
+            elif cmd == "FINISHED":
+                statusThread = StatusThread("[UPDATE]: Updated file's list...")
+                statusThread.update_status.connect(self.listFiles)
+                statusThread.start()
+                
+                time.sleep(WAIT_TIME)
+
             elif cmd == "HELP":
                 data = "OK@"
                 data += "LIST: List all the files from the server.\n"
@@ -273,7 +284,6 @@ class MainWindow(QDialog):
         statusThread.start()
         conn.close()
 
-
 class StatusThread(QThread):
     update_status = pyqtSignal(str)
 
@@ -283,7 +293,6 @@ class StatusThread(QThread):
 
     def run(self):
         self.update_status.emit(self.status)
-
 
 app = QApplication(sys.argv)
 mainWindow = MainWindow()

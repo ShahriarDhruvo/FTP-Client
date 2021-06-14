@@ -106,7 +106,7 @@ class MainWindow(QDialog):
         data = self.client.recv(SIZE).decode(FORMAT)
         data = data.split("@")
 
-        # Clear all previous widget
+        # Clear all the widgets from the scrollArea if server send any updated list
         if data:
             for i in reversed(range(self.fileListLayout.count())):
                 self.fileListLayout.itemAt(i).widget().setParent(None)
@@ -118,6 +118,9 @@ class MainWindow(QDialog):
                 self.filesLayout(i, data[i])
         else:
             self.statusBox.setText(f"[{data[0]}]: " + data[1])
+        
+        # To Refresh server side's file list
+        self.client.send("FINISHED".encode(FORMAT))
 
     def uploadFile(self):
         path = self.fileLocation.text()
