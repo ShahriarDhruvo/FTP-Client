@@ -45,8 +45,12 @@ class MainWindow(QDialog):
         # Initial Connect by default address
         #self.startServer()
 
+
     def stopServer(self):
         self.handleStatus("[STOP]: The server has been stopped")
+	    # # clear scroll area when the server is terminated
+        for i in reversed(range(self.fileListLayout.count())):
+            self.fileListLayout.itemAt(i).widget().setParent(None)
         self.server.close()
 
     # Status handler
